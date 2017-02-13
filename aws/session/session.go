@@ -315,7 +315,10 @@ func mergeConfigSrcs(cfg, userCfg *aws.Config, envCfg envConfig, sharedCfg share
 						opt.ExternalID = aws.String(sharedCfg.AssumeRole.ExternalID)
 					}
 
-					// MFA not supported
+					if len(sharedCfg.AssumeRole.MFASerial) > 0 {
+						opt.SerialNumber = aws.String(sharedCfg.AssumeRole.MFASerial)
+						opt.TokenProvider = sharedCfg.AssumeRoleTokenProvider
+					}
 				},
 			)
 		} else if len(sharedCfg.Creds.AccessKeyID) > 0 {

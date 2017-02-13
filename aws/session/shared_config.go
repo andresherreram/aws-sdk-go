@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/go-ini/ini"
 )
 
@@ -21,6 +22,7 @@ const (
 	externalIDKey      = `external_id`       // optional
 	mfaSerialKey       = `mfa_serial`        // optional
 	roleSessionNameKey = `role_session_name` // optional
+	mfaPromptToken     = `mfa_prompt_token`  // optional
 
 	// Additional Config fields
 	regionKey = `region`
@@ -54,6 +56,9 @@ type sharedConfig struct {
 
 	AssumeRole       assumeRoleConfig
 	AssumeRoleSource *sharedConfig
+
+	// Object to get the MFA token
+	AssumeRoleTokenProvider stscreds.TokenProvider
 
 	// Region is the region the SDK should use for looking up AWS service endpoints
 	// and signing requests.
@@ -203,6 +208,14 @@ func (cfg *sharedConfig) setFromIniFile(profile string, file sharedConfigFile) e
 			MFASerial:       section.Key(mfaSerialKey).String(),
 			RoleSessionName: section.Key(roleSessionNameKey).String(),
 		}
+
+		if len(cfg.AssumeRole.MFASerial) > 0 {
+			sharedPromptToken, _ := section.Key(mfaPromptToken).Bool()
+			if sharedPromptToken || enablePromptToken() {
+				cfg.AssumeRoleTokenProvider = new(promptTokenCLI)
+			}
+		}
+
 	}
 
 	// Region

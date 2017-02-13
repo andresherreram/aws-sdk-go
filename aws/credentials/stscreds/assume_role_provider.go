@@ -5,6 +5,7 @@
 package stscreds
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -25,6 +26,11 @@ type AssumeRoler interface {
 // DefaultDuration is the default amount of time in minutes that the credentials
 // will be valid for.
 var DefaultDuration = time.Duration(15) * time.Minute
+
+// TokenProvider represent the minimal subset for the MFA token provider
+type TokenProvider interface {
+	Token() *string
+}
 
 // AssumeRoleProvider retrieves temporary credentials from the STS service, and
 // keeps track of their expiration time. This provider must be used explicitly,
@@ -66,6 +72,9 @@ type AssumeRoleProvider struct {
 	// for MFA). If the role being assumed requires MFA and if the TokenCode value
 	// is missing or expired, the AssumeRole call returns an "access denied" error.
 	TokenCode *string
+
+	// Optional provider of token from the MFA each time to get STS credentials
+	TokenProvider TokenProvider
 
 	// ExpiryWindow will allow the credentials to trigger refreshing prior to
 	// the credentials actually expiring. This is beneficial so race conditions
@@ -139,9 +148,13 @@ func (p *AssumeRoleProvider) Retrieve() (credentials.Value, error) {
 	if p.Policy != nil {
 		input.Policy = p.Policy
 	}
-	if p.SerialNumber != nil && p.TokenCode != nil {
-		input.SerialNumber = p.SerialNumber
-		input.TokenCode = p.TokenCode
+	if p.SerialNumber != nil {
+		if p.TokenProvider != nil {
+			input.SerialNumber = p.SerialNumber
+			input.TokenCode = p.TokenProvider.Token()
+		} else {
+			return credentials.Value{ProviderName: ProviderName}, errors.New("There is no way to obtain the Token for the MFA. See: http://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/stscreds/#TokenProvider")
+		}
 	}
 	roleOutput, err := p.Client.AssumeRole(input)
 

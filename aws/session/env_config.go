@@ -178,6 +178,11 @@ func sharedConfigFilename() string {
 	return filepath.Join(userHomeDir(), ".aws", "config")
 }
 
+func enablePromptToken() bool {
+	e, _ := strconv.ParseBool(os.Getenv("AWS_MFA_PROMPT_TOKEN"))
+	return e
+}
+
 func userHomeDir() string {
 	homeDir := os.Getenv("HOME") // *nix
 	if len(homeDir) == 0 {       // windows

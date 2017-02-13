@@ -146,8 +146,9 @@ configuration and support for MFA.
 	role_arn = arn:aws:iam::<account_number>:role/<role_name>
 	source_profile = profile_with_creds
 	external_id = 1234
-	mfa_serial = not supported!
+	mfa_serial = mfa_device
 	role_session_name = session_name
+  mfa_prompt_token = yes_no
 
 Region is the region the SDK should use for looking up AWS service endpoints
 and signing requests.
