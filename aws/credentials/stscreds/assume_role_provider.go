@@ -27,6 +27,9 @@ type AssumeRoler interface {
 // will be valid for.
 var DefaultDuration = time.Duration(15) * time.Minute
 
+// TokenProviderUser is the instance of the object ot get the token provider defined by developer
+var TokenProviderUser TokenProvider = nil
+
 // TokenProvider represent the minimal subset for the MFA token provider
 type TokenProvider interface {
 	Token() *string

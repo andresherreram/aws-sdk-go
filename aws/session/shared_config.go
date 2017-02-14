@@ -211,9 +211,13 @@ func (cfg *sharedConfig) setFromIniFile(profile string, file sharedConfigFile) e
 
 		if len(cfg.AssumeRole.MFASerial) > 0 {
 			sharedPromptToken, _ := section.Key(mfaPromptToken).Bool()
-			if sharedPromptToken || enablePromptToken() {
+
+			if stscreds.TokenProviderUser != nil {
+				cfg.AssumeRoleTokenProvider = stscreds.TokenProviderUser
+			} else if sharedPromptToken || enablePromptToken() {
 				cfg.AssumeRoleTokenProvider = new(promptTokenCLI)
 			}
+
 		}
 
 	}
